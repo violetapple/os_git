@@ -1,0 +1,191 @@
+#!/bin/bash
+
+#global variable pipe = FIFO
+
+
+#COLORS:
+#0 = black, 1 = red, 2 = green, 3 = brown, 4 = blue
+#5 = purple, 6 = cyan, 7 = bright grey, 8 = grey
+#9 = bright red, 10 = bright green, 11 = bright yellow, 12 = bright blue
+#13 = bright purple, 14 = very bright blue, 15 = white
+
+
+MAP='         '
+POINTER_X=0
+POINTER_Y=0
+PLAYER_CHAR='x'
+OPPONENT_CHAR='o'
+PLAYERS_COUNT=2
+#BORDER='░'
+STANDOUT_UNDERLINE_MODE=`tput sgr 1 1`
+BANNER_COLOR=`tput setaf 5`
+BORDER_COLOR=`tput setaf 1`
+PLAYER_COLOR=`tput setaf 2`
+OPPONENT_COLOR=`tput setaf 1`
+POINTER_COLOR=`tput setaf 2`
+NORMAL_MODE=`tput sgr 0 0`
+
+function print_banner() {
+    echo ${BANNER_COLOR}
+    echo '------------------------'
+    echo '|▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓|'
+    echo '|▓                    ▓|'
+    echo '|▓krestiki-noliki 2019▓|'
+    echo '|▓                    ▓|'
+    echo '|▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓|'
+    echo '------------------------'
+    echo ${STANDOUT_UNDERLINE_MODE}
+    echo ${PLAYER_COLOR}'Вы играете за :'${NORMAL_MODE}' '${PLAYER_CHAR}
+    echo ${OPPONENT_COLOR}'Ожидание от :'${NORMAL_MODE}'   '${OPPONENT_CHAR}$'\n'
+}
+
+function refresh_map() {
+    b=$BORDER_COLOR
+    n=$NORMAL_MODE
+    c=$POINTER_COLOR
+
+    tput reset
+    print_banner
+    echo ${b}'░░░░░░'
+    for x in 0 1 2; do
+        for y in 0 1 2; do
+            m=${MAP:3 * x + y:1}
+            if [[ $x = $POINTER_Y ]] && [[ $y = $POINTER_X ]];
+                then echo -n ${c}$PLAYER_CHAR${n}${c}'<'${b}
+                else echo -n ${n}${m}${b}'░'${b}
+            fi
+        done
+        echo ' '
+        echo '░░░░░░'
+    done
+    echo $n
+}
+
+function draw_character() {
+    #x_coord = $2, y_coord=$3
+    cursor=$((3 * $3 + $2))
+
+    if [[ ${MAP:cursor:1} = ' ' ]]; then
+        MAP=${MAP:0:cursor}${1}${MAP:cursor + 1}
+    fi
+}
+
+function make_turn() {
+    draw_character $PLAYER_CHAR $POINTER_X $POINTER_Y
+    echo $POINTER_X $POINTER_Y > pipe
+    OPPONENT_CHAR=`opponent_char`
+}
+
+function key_handler() {
+    #key = $1
+    case $1 in
+        A) POINTER_Y=$(((POINTER_Y + 2) % 3));;
+        B) POINTER_Y=$(((POINTER_Y + 1) % 3));;
+        C) POINTER_X=$(((POINTER_X + 1) % 3));;
+        D) POINTER_X=$(((POINTER_X + 2) % 3));;
+        '') make_turn;;
+    esac
+}
+
+function make_player_move() {
+    read -r -sn1 key
+    key_handler $key
+}
+
+function make_opponent_move() {
+    opponent_move=`cat pipe`
+    draw_character `opponent_char` $opponent_move
+    OPPONENT_CHAR=$PLAYER_CHAR
+}
+
+function make_game_move() {
+    #$1 = turn has been made by player
+    if [[ $1 = $PLAYER_CHAR ]]; 
+        then make_player_move
+        else make_opponent_move
+    fi
+}
+
+function is_finished() {
+    win_indexes=(0 1 2 3 4 5 6 7 8 0 3 6 1 4 7 2 5 8 0 4 8 2 4 6)
+    for i in `seq 0 3 $((${#win_indexes[@]} - 1))`; do
+        first=${MAP:win_indexes[i]:1}
+        second=${MAP:win_indexes[i + 1]:1}
+        third=${MAP:win_indexes[i + 2]:1}
+        if [[ $first = $second ]] && [[ $first != '-' ]] && [[ $second = $third ]]; then
+            echo $first
+            break
+        fi
+    done
+}
+
+function random_char() {
+    # 2 игрока - x, o
+    player_index=$((RANDOM % $PLAYERS_COUNT))
+    if [[ $player_index = 0 ]];
+        then echo 'x';
+        else echo 'o';
+    fi
+}
+
+function opponent_char() {
+    if [[ $PLAYER_CHAR = 'x' ]];
+        then echo 'o'
+        else echo 'x'
+    fi
+}
+
+function first_connection() {
+    #trap 'reset; echo До свидания!; sleep 2; rm pipe; reset' SIGINT SIGTERM SIGHUP SIGQUIT
+    trap 'rm pipe; reset' EXIT
+    echo ${BANNER_COLOR}'Ожидание игроков...'
+    PLAYER_CHAR=`random_char`
+    echo `opponent_char` > pipe
+    opponent_pid=`cat pipe`
+    trap 'kill -INT -'$opponent_pid' &>/dev/null; reset; exit' INT
+    echo $$ > pipe
+}
+
+function second_connection() {
+    PLAYER_CHAR=`cat pipe`
+    echo $$ > pipe
+    opponent_pid=`cat pipe`
+    trap 'kill -INT -'$opponent_pid' &>/dev/null; reset; exit' INT
+    trap 'reset' EXIT
+}
+
+function check_winner() {
+    winner=`is_finished`
+
+    if [[ ! $MAP =~ " " ]] || [[ $winner != '' ]]; then
+        if [[ $winner = $PLAYER_CHAR ]];
+            then echo 'Победитель!'
+        elif [[ $winner = `opponent_char` ]];
+            then echo 'Проигравший!'
+        else
+            echo 'Ничья!'
+        fi
+
+        sleep 2
+        exit
+    fi
+}
+
+function make_connection() {
+    #$1 = return
+    if [[ $1 = 0 ]]; 
+        then first_connection
+        else second_connection
+    fi
+}
+
+#trap '' SIGWINCH
+mkfifo pipe &>/dev/null
+make_connection $?
+
+while true; do
+    refresh_map
+    make_game_move $OPPONENT_CHAR
+    check_winner
+done
+
