@@ -142,7 +142,7 @@ int make_sparse_file(char *sparse_file) {
             break;
         }
     }
-    return close_file(fd);
+    return close(fd);
 }
 
 int main(int argc, char *argv[]) {
