@@ -55,7 +55,7 @@ int close_file_with_info(int fd) {
     return close_result;
 }
 
-int read_with_info(int fd, void *buf, unsigned count) {
+int read_with_info(int fd, void *read_buffer) {
     int bytes_read = read(INPUT_STREAM_DESC, read_buffer, BUFFER_LENGTH);
     if(bytes_read < 0) {
         printf("Error with reading\n");
@@ -97,7 +97,7 @@ int make_sparse_file(char *sparse_file) {
 
     while (1) {
         //читаем байты из STDIN
-        bytes_has_been_read = read_with_info(INPUT_STREAM_DESC, read_buffer, BUFFER_LENGTH);
+        bytes_has_been_read = read_with_info(INPUT_STREAM_DESC, read_buffer);
         if(bytes_has_been_read < 0) {
             return bytes_has_been_read;
         }
