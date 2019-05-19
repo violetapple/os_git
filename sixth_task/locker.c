@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 int SECONDS_TO_WAIT = 60; //сколько секунд процесс должен ждать снятия блокировки. По истечении этого времени программа завершится.
 int bytesToRead = 1024;
