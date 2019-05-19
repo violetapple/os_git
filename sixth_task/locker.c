@@ -7,6 +7,7 @@ int SECONDS_TO_WAIT = 60; //сколько секунд процесс долж�
 int bytesToRead = 1024;
 char *lockFileExtension = ".lck";
 char *lockFileFolder = "/tmp/";
+char localFileName[255];
 char *fullLockFileName;
 char *operation;
 
@@ -36,7 +37,6 @@ char* getLocalFileName(char* absoluteFileName) {
 
 	for(int i = strlen(absoluteFileName) - 1; i >= 0; i--) {
 		if(absoluteFileName[i] == '/') {
-			char localFileName[strlen(localFileNameLength) + 1];
 			//strncpy(localFileName, absoluteFileName + strlen(absoluteFileName) - localFileNameLength + 1, localFileNameLength);
 			strncpy(localFileName, absoluteFileName + strlen(absoluteFileName) - localFileNameLength, localFileNameLength);
 			localFileName[localFileNameLength] = '\0'; //функция strncpy НЕ копирует нулевой символ, его надо добавлять вручную
@@ -76,16 +76,16 @@ int isFileExists(char *absoluteFileName) {
 	}
 }
 
-char* getLockFileName(char* fileName) {
-	char* newFile = safeMalloc(strlen(fileName) + strlen(lockFileExtension) + 1);
-	strcpy(newFile, fileName);
-	strcpy(newFile+strlen(fileName), lockFileExtension);
+char* getLockFileName() {
+	char* newFile = safeMalloc(strlen(localFileName) + strlen(lockFileExtension) + 1);
+	strcpy(newFile, localFileName);
+	strcpy(newFile+strlen(localFileName), lockFileExtension);
 	return newFile;
 }
 
 void waitForLock() {
 	int seconds;
-	printf("Waiting for file...\n");
+	printf("Waiting for file %s\n", fullLockFileName);
 	while(1) {
 		sleep(1); //чтобы не каждое мгновение запрашивать ресурс
 		seconds += 1;
@@ -107,10 +107,12 @@ void createLockFile() {
 }
 
 void makeOperation(char* fileName, int argumentsToWrite, char* data[]) {
-	// произвести операцию над указанным файлом (записать или прочитать). argumentsToWrite - количество переданных на запись аргументов
+	// метод производит операцию над указанным файлом (записать или прочитать). argumentsToWrite - количество переданных на запись аргументов
+
 	sleep(2); //чтобы проверить работоспособность блокировки
 	if(operation[0] == 'w') {
 		if(argumentsToWrite > 0) {
+			printf("Writing to file\n");
 			char* dataToWrite;
 			FILE *fp = fopen(fileName, "wa");
 			if(fp == NULL) {
@@ -124,6 +126,7 @@ void makeOperation(char* fileName, int argumentsToWrite, char* data[]) {
 			fclose(fp);
 		}
 	} else if(operation[0] == 'r') {
+		printf("Reading from file\n");
 		//для простоты читаем первую строку с ограничением в bytesToRead байт(или пока не встретим EOF).
 		FILE *fp = fopen(fileName, "r");
 		if(fp == NULL) {
@@ -136,6 +139,7 @@ void makeOperation(char* fileName, int argumentsToWrite, char* data[]) {
 	} else {
 		printf("Cannot recognize operation. Possible operations: read, write\n");
 	}
+	printf("removing file %s\n", fullLockFileName);
 	removeFile(fullLockFileName);
 }
 
@@ -144,10 +148,11 @@ int main(int argc, char* argv[]) {
 		printf("[-] Please specify data in following format: programm_name absoluteFileName operationName(read or write) [data to write]\n");
 	} else {
 		char* absoluteFileName = argv[1];
-		//operation = argv[2];
-		char* lockFile = getLockFileName(getLocalFileName(absoluteFileName));
+		operation = argv[2];
+		getLocalFileName(absoluteFileName);
+		char* lockFile = getLockFileName();
 		fullLockFileName = getAbsoluteFileName(lockFileFolder, lockFile);
-		free(lockFile);
+		//free(lockFile);
 		createLockFile();
 		makeOperation(absoluteFileName, argc-3, argv);
 	}
