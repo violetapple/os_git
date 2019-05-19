@@ -106,6 +106,8 @@ void createLockFile() {
 }
 
 void makeOperation(char* fileName, int argumentsToWrite, char* data[]) {
+	// произвести операцию над указанным файлом (записать или прочитать). argumentsToWrite - количество переданных на запись аргументов
+	sleep(2); //чтобы проверить работоспособность блокировки
 	if(operation[0] == 'w') {
 		if(argumentsToWrite > 0) {
 			char* dataToWrite;
