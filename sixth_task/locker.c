@@ -62,7 +62,8 @@ void acquireLock(char *lockFile) {
 	if(fp == NULL) {
 		printf ("Cannot open file %s.\n", fullLockFileName);
 		exit(1);
-	} 
+	}
+	//пишем в файл блокировки PID процесса и название операции (read/write)
     fprintf(fp, "%d %s\n", getpid(), operation);
     fclose(fp);
 }
