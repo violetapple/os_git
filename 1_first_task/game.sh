@@ -106,7 +106,7 @@ function game_handler() {
 function game_has_finished() {
     # возможные комбинации для победы
     win_indexes=(0 1 2 3 4 5 6 7 8 0 3 6 1 4 7 2 5 8 0 4 8 2 4 6)
-    # ${#array[*]} и ${#array[@]} возвращает количество элементов в массиве.
+    # >opennet: ${#array[*]} и ${#array[@]} возвращает количество элементов в массиве.
     for i in "${#win_indexes[@]} - 1"
     do
         first=${MAP:win_indexes[i]:1}
@@ -174,8 +174,10 @@ function check_winner() {
 
 function make_connection() {
     #$1 = return
-    if [[ $1 = 0 ]]; 
+    if [[ $1 = 0 ]];
+        #если никто не подключился
         then first_connection
+        #иначе ждем второго
         else second_connection
     fi
 }
