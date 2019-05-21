@@ -41,19 +41,15 @@ function print_banner() {
 
 function refresh_map() {
     #в бесконечном цикле отрисовываем карту (цикл в конце скрипта)
-    b=$BORDER_COLOR
-    n=$NORMAL_MODE
-    c=$POINTER_COLOR
-
     tput reset
     print_banner
-    echo ${b}'░░░░░░'
+    echo $BORDER_COLOR'░░░░░░'
     for x in 0 1 2; do
         for y in 0 1 2; do
             m=${MAP:3 * x + y:1}
             if [[ $x = $POINTER_Y ]] && [[ $y = $POINTER_X ]];
-                then echo -n ${c}$PLAYER_CHAR${n}${c}'<'${b}
-                else echo -n ${n}${m}${b}'░'${b}
+                then echo -n $POINTER_COLOR$PLAYER_CHAR$NORMAL_MODE$POINTER_COLOR'<'$BORDER_COLOR
+                else echo -n $NORMAL_MODE${m}$BORDER_COLOR'░'$BORDER_COLOR
             fi
         done
         echo ' '
@@ -108,8 +104,11 @@ function game_handler() {
 }
 
 function game_has_finished() {
+    # возможные комбинации для победы
     win_indexes=(0 1 2 3 4 5 6 7 8 0 3 6 1 4 7 2 5 8 0 4 8 2 4 6)
-    for i in `seq 0 3 $((${#win_indexes[@]} - 1))`; do
+    # ${#array[*]} и ${#array[@]} возвращает количество элементов в массиве.
+    for i in "${#win_indexes[@]} - 1"
+    do
         first=${MAP:win_indexes[i]:1}
         second=${MAP:win_indexes[i + 1]:1}
         third=${MAP:win_indexes[i + 2]:1}
@@ -117,6 +116,7 @@ function game_has_finished() {
             echo $first
             break
         fi
+        i = $i+3
     done
 }
 
