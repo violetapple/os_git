@@ -23,6 +23,8 @@ BORDER_COLOR=`tput setaf 1`
 PLAYER_COLOR=`tput setaf 2`
 OPPONENT_COLOR=`tput setaf 1`
 POINTER_COLOR=`tput setaf 2`
+GREEN_COLOR=`tput setaf 10`
+RED_COLOR=`tput setaf 9`
 NORMAL_MODE=`tput sgr 0 0`
 
 function print_banner() {
@@ -34,9 +36,11 @@ function print_banner() {
     echo '|▓                    ▓|'
     echo '|▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓|'
     echo '------------------------'
-    echo ${STANDOUT_UNDERLINE_MODE}
-    echo ${PLAYER_COLOR}'Вы играете за :'${NORMAL_MODE}' '${PLAYER_CHAR}
-    echo ${OPPONENT_COLOR}'Ожидание от :'${NORMAL_MODE}'   '${get_opponent_char}$'\n'
+    if [[ $PLAYER_CHAR = ${get_opponent_char} ]];
+        then echo ${STANDOUT_UNDERLINE_MODE}${GREEN_COLOR}
+        else echo ${RED_COLOR}
+    fi
+    echo 'Вы играете за : '${PLAYER_CHAR}${NORMAL_MODE}$'\n$\n'
 }
 
 function refresh_map() {
@@ -160,13 +164,12 @@ function check_winner() {
 
     if [[ ! $MAP =~ " " ]] || [[ $winner != '' ]]; then
         if [[ $winner = $PLAYER_CHAR ]];
-            then echo 'Победитель!'
+            then echo ${GREEN_COLOR}'Победитель!'
         elif [[ $winner = `get_opponent_char` ]];
-            then echo 'Проигравший!'
+            then echo ${RED_COLOR}'Проигравший!'
         else
             echo 'Ничья!'
         fi
-
         sleep 2
         exit
     fi
