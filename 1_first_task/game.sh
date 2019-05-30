@@ -65,7 +65,6 @@ function refresh_map() {
 function draw_character() {
     #x_coord in $2, y_coord in $3
     cursor=$((3 * $3 + $2))
-
     if [[ ${MAP:cursor:1} = ' ' ]]; then
         MAP=${MAP:0:cursor}${1}${MAP:cursor + 1}
     fi
@@ -120,7 +119,7 @@ function game_has_finished() {
             echo $first
             break
         fi
-        i = $i+3
+        i=$i+3
     done
 }
 

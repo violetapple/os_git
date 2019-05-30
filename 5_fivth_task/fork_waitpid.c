@@ -30,16 +30,16 @@ for (p=0; p<MAXPROC; p++)
   	case 0: 
     		cpid = getpid();         //global PID 
     		for (i = 0; i < 5; i++)
-		{ 
-		printf("%d: do something with child %d, pid = %d\n", i, p, cpid); 
-		sleep(p+1); 
-		} 
+    		{ 
+    		printf("%d: do something with child %d, pid = %d\n", i, p, cpid); 
+    		sleep(p+1); 
+    		} 
     		printf("Exit child %d, pid = %d\n", p, cpid);
     		exit(0);
   	default:
-		pid_list[p]=cpid;
-        	pid_count++;
-  	}
+  		pid_list[p]=cpid;
+          	pid_count++;
+    	}
 }
 
 while (pid_count)
