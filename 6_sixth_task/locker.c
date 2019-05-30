@@ -115,7 +115,7 @@ void makeOperation(char* fileName, int argumentsToWrite, char* data[]) {
 		if(argumentsToWrite > 0) {
 			printf("Writing to file\n");
 			char* dataToWrite;
-			FILE *fp = fopen(fileName, "wa");
+			FILE *fp = fopen(fileName, "a");
 			if(fp == NULL) {
 				printf ("Cannot open file %s\n", fileName);
 				exit(1);
