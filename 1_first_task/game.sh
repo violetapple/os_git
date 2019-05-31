@@ -16,6 +16,7 @@ POINTER_Y=0
 PLAYER_CHAR='x'
 get_opponent_char='o'
 PLAYERS_COUNT=2
+ERRORS=0
 #BORDER='░'
 STANDOUT_UNDERLINE_MODE=`tput sgr 1 1`
 BANNER_COLOR=`tput setaf 5`
@@ -70,10 +71,22 @@ function draw_character() {
     fi
 }
 
+function check_turn() {
+    cursor=$((3 * $2 + $1))
+    if [[ ${MAP:cursor:1} = ' ' ]]; 
+        then ERRORS=0
+        else ERRORS=1
+    fi
+}
+
 function make_turn() {
-    draw_character $PLAYER_CHAR $POINTER_X $POINTER_Y
-    echo $POINTER_X $POINTER_Y > pipe
-    get_opponent_char=`get_opponent_char`
+    check_turn $POINTER_X $POINTER_Y
+    if [[ $ERRORS = 0 ]]; then
+        draw_character $PLAYER_CHAR $POINTER_X $POINTER_Y
+        echo $POINTER_X $POINTER_Y > pipe
+        get_opponent_char=`get_opponent_char`
+        ERRORS=1
+    fi
 }
 
 function key_handler() {
@@ -110,8 +123,7 @@ function game_has_finished() {
     # возможные комбинации для победы
     win_indexes=(0 1 2 3 4 5 6 7 8 0 3 6 1 4 7 2 5 8 0 4 8 2 4 6)
     # >opennet: ${#array[*]} и ${#array[@]} возвращает количество элементов в массиве.
-    for i in "${#win_indexes[@]} - 1"
-    do
+    for i in `seq 0 3 $((${#win_indexes[@]} - 1))`; do
         first=${MAP:win_indexes[i]:1}
         second=${MAP:win_indexes[i + 1]:1}
         third=${MAP:win_indexes[i + 2]:1}
@@ -119,7 +131,6 @@ function game_has_finished() {
             echo $first
             break
         fi
-        i=$i+3
     done
 }
 
